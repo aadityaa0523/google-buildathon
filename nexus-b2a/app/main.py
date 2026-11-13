@@ -5,7 +5,7 @@ Enforces role-based authority (F01) and public projection safety (F02).
 """
 
 import os
-from typing import List, Optional
+from typing import List, Optional, Literal
 from fastapi import FastAPI, HTTPException, Header, Depends, Query, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -242,7 +242,7 @@ def create_app(
     def search_offers(
         capability_id: str = "invoice.extract.v1",
         max_buyer_price: Optional[int] = Query(None, description="Max test-credit price ceiling"),
-        sort_by: str = Query("price_asc", enum=["price_asc", "rating_desc", "latency_asc"])
+        sort_by: Literal["price_asc", "rating_desc", "latency_asc"] = "price_asc"
     ) -> List[PublicOffer]:
         """Discover and compare competing SaaS capability offers without leaking secrets (F02)."""
         return offers.search_offers(capability_id=capability_id, max_buyer_price=max_buyer_price, sort_by=sort_by)
