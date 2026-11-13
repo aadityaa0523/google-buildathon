@@ -1,0 +1,37 @@
+"""Protected, disposable preview. Never use for durable marketplace data."""
+import base64
+import hmac
+import os
+import secrets
+
+from starlette.responses import HTMLResponse, JSONResponse, Response
+
+# This snapshot intentionally makes no paid model calls.
+os.environ.pop('GEMINI_API_KEY', None)
+# Privileged API routes receive a fresh private key, never shipped to the UI.
+os.environ['NEXUS_OPERATOR_KEY'] = secrets.token_urlsafe(32)
+
+from app.main import app
+
+
+@app.middleware('http')
+async def protect_preview(request, call_next):
+    password = os.environ.get('NEXUS_PREVIEW_PASSWORD', '')
+    if len(password) < 20:
+        return JSONResponse({'detail': 'Preview password has not been configured.'}, status_code=503)
+    auth = request.headers.get('authorization', '')
+    expected = base64.b64encode(('nexus:' + password).encode()).decode()
+    supplied = request.cookies.get('nexus_preview_access', '')
+    cookie = hmac.new(password.encode(), b'nexus-preview-session-v1', 'sha256').hexdigest()
+    if not (hmac.compare_digest(auth, 'Basic ' + expected) or hmac.compare_digest(supplied, cookie)):
+        return Response('Private Nexus demo: sign in with the preview credentials.', status_code=401,
+                        headers={'WWW-Authenticate': 'Basic realm="Nexus preview", charset="UTF-8"', 'Cache-Control': 'no-store'})
+    # Browser API calls use Bearer authentication; the access cookie preserves
+    # preview authentication without interfering with the agent token header.
+    response = await call_next(request)
+    response.headers['Cache-Control'] = 'no-store'
+    response.headers['X-Nexus-Preview'] = 'disposable-test-credits'
+    response.set_cookie('nexus_preview_access', cookie, secure=True, httponly=True, samesite='strict', max_age=3600)
+    if isinstance(response, HTMLResponse):
+        pass
+    return response

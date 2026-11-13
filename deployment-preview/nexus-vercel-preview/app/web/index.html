@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus — Agent-Native SaaS Capability Marketplace</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f19; color: #f1f5f9; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col"><aside style="background:#78350f;color:#fff;padding:12px;text-align:center;position:relative;z-index:1000">PRIVATE DEMO — test credits only; temporary data; deterministic extraction; operator actions disabled.</aside>
+
+  <!-- Top Navbar -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
+      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center font-bold text-xl text-white shadow-lg shadow-indigo-500/20">
+        N
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+          Nexus <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono font-medium">B2A Marketplace</span>
+        </h1>
+        <p class="text-xs text-slate-400">Agent-Native Discovery &bull; Spend Grants &bull; Double-Entry Settlement</p>
+      </div>
+    </div>
+    
+    <!-- Balance Header -->
+    <div class="flex items-center space-x-4 text-xs font-mono">
+      <div class="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 flex items-center gap-2">
+        <span class="text-slate-400">Buyer Wallet:</span>
+        <span id="nav-buyer-bal" class="text-emerald-400 font-bold">-- credits</span>
+      </div>
+      <div class="bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-1.5 flex items-center gap-2">
+        <span class="text-slate-400">Platform Fees:</span>
+        <span id="nav-fee-bal" class="text-cyan-400 font-bold">-- credits</span>
+      </div>
+      <button onclick="refreshData()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white font-medium transition flex items-center gap-1.5">
+        <i class="fa-solid fa-arrows-rotate"></i> Refresh
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Grid -->
+  <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-7xl mx-auto w-full">
+
+    <!-- LEFT COLUMN: Live Offers & Interactive Agent Trigger (5 Cols) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- Interactive Purchasing Simulator -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <i class="fa-solid fa-robot text-indigo-400"></i> Agent Purchase Tester
+          </h2>
+          <span class="text-xs bg-indigo-950 text-indigo-300 border border-indigo-800/60 px-2 py-0.5 rounded-full mono">invoice.extract.v1</span>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Select SaaS Offer to Purchase:</label>
+            <select id="select-offer" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white mono focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="">Loading offers...</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-slate-400 font-medium mb-1">Sample Invoice Text (Raw Input):</label>
+            <textarea id="input-invoice" rows="7" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 mono text-xs leading-relaxed focus:ring-2 focus:ring-indigo-500 outline-none">INVOICE
+Billed By: Acme Industrial Supplies Ltd
+Invoice Number: INV-2026-8841
+Date: 2026-11-14
+Currency: INR
+
+Line Items:
+1. Deep Groove Ball Bearings (Qty: 20) - ₹3,200.00
+2. Replacement Solenoid Valves (Qty: 5) - ₹6,800.00
+
+Subtotal: ₹10,000.00
+GST Tax (18%): ₹1,800.00
+Total Amount: ₹11,800.00
+Payment Terms: Net 30 days</textarea>
+          </div>
+
+          <div class="flex items-center justify-between text-slate-400 font-mono text-[11px] bg-slate-950 p-2.5 rounded-lg border border-slate-800/80">
+            <span>Spend Grant Limit: <strong class="text-slate-200" id="grant-cap">250/order</strong></span>
+            <span>Idempotency Key: <strong class="text-indigo-400" id="idemp-preview">auto-gen</strong></span>
+          </div>
+
+          <button id="btn-purchase" onclick="executePurchase()" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-bolt"></i> Execute Agent Purchase
+          </button>
+        </div>
+      </div>
+
+      <!-- Active SaaS Offers List -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-store text-cyan-400"></i> Registered SaaS Offers
+        </h2>
+        <div id="offers-container" class="space-y-3">
+          <p class="text-xs text-slate-500">Loading offers...</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Real-Time Order Stream, Evidence Extraction, and Dispute Console (7 Cols) -->
+    <div class="lg:col-span-7 space-y-6">
+
+      <!-- Extraction Output & Evidence Viewer -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <i class="fa-solid fa-file-invoice text-emerald-400"></i> Extracted Result & Grounding Proof
+          </h2>
+          <span id="extraction-status" class="text-xs text-slate-400 mono">Awaiting execution...</span>
+        </div>
+
+        <div id="result-view" class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 min-h-[160px] mono text-xs text-slate-300 overflow-x-auto">
+          <p class="text-slate-600 italic">When an agent completes a purchase, the validated structured output and exact character evidence spans will render here.</p>
+        </div>
+      </div>
+
+      <!-- Live Orders & Audit Ledger -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-indigo-400"></i> Live Order State Machine
+          </h2>
+          <span class="text-xs text-slate-500 mono">Real-time state & ledger</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs mono">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400">
+                <th class="pb-2">Order ID</th>
+                <th class="pb-2">Execution</th>
+                <th class="pb-2">Accounting</th>
+                <th class="pb-2">Charge</th>
+                <th class="pb-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-table" class="divide-y divide-slate-800/60 text-slate-300">
+              <tr>
+                <td colspan="5" class="py-4 text-center text-slate-600">No orders executed yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Human Operator Dispute & Refund Panel -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 mb-4 flex items-center gap-2">
+          <i class="fa-solid fa-gavel text-amber-400"></i> Operator Dispute & Reversal Adjudication
+        </h2>
+        <div id="disputes-container" class="space-y-3">
+          <p class="text-xs text-slate-500">No active disputes.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Script logic -->
+  <script>
+    let currentAgentKey = "";
+    let currentGrantId = "";
+    let currentOwnerId = "";
+
+    async function init() {
+      // 1. Fetch offers
+      await loadOffers();
+      // 2. Fetch or seed demo user/agent
+      await setupDemoActor();
+      // 3. Refresh live orders
+      await loadBalances();
+    }
+
+    async function loadOffers() {
+      try {
+        const res = await fetch("/v1/offers");
+        const offers = await res.json();
+        const select = document.getElementById("select-offer");
+        const container = document.getElementById("offers-container");
+        
+        select.innerHTML = "";
+        container.innerHTML = "";
+
+        offers.forEach(o => {
+          // Add to select dropdown
+          const opt = document.createElement("option");
+          opt.value = o.id;
+          opt.dataset.version = o.version;
+          opt.dataset.price = o.pricing.buyer_total_credits;
+          opt.textContent = `${o.title} — ${o.pricing.buyer_total_credits} credits (Net: ${o.pricing.seller_net_credits}, Fee: ${o.pricing.nexus_fee_credits})`;
+          select.appendChild(opt);
+
+          // Add card
+          const card = document.createElement("div");
+          card.className = "bg-slate-950 border border-slate-800/80 rounded-xl p-3.5 hover:border-slate-700 transition";
+          card.innerHTML = `
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-xs font-bold text-white">${o.title}</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">${o.description}</p>
+              </div>
+              <span class="text-xs font-mono font-bold text-emerald-400 px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/60">
+                ${o.pricing.buyer_total_credits} credits
+              </span>
+            </div>
+            <div class="flex items-center gap-4 mt-2.5 text-[11px] font-mono text-slate-500 border-t border-slate-900 pt-2">
+              <span><i class="fa-solid fa-clock text-slate-600"></i> ${o.p95_latency_ms}ms</span>
+              <span><i class="fa-solid fa-check text-slate-600"></i> ${o.success_rate_pct}% success</span>
+              <span><i class="fa-solid fa-star text-amber-500"></i> ${o.average_rating > 0 ? o.average_rating : 'New'} (${o.rating_count})</span>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (e) {
+        console.error("Failed loading offers:", e);
+      }
+    }
+
+    async function setupDemoActor() {
+      try {
+        const demoRes = await fetch("/v1/demo_actor");
+        if (demoRes.ok) {
+          const d = await demoRes.json();
+          if (d.buyer_owner_id && d.buyer_agent_key && d.grant_id) {
+            currentOwnerId = d.buyer_owner_id;
+            currentAgentKey = d.buyer_agent_key;
+            currentGrantId = d.grant_id;
+            document.getElementById("grant-cap").textContent = "500 max/order";
+            await loadBalances();
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not pre-fetch demo actor, falling back to dynamic creation", err);
+      }
+
+      try {
+        // Create demo owner if needed
+        const ownerRes = await fetch("/v1/owners", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({email: "console.operator@nexus.local", name: "Operator Console"})
+        });
+        const owner = await ownerRes.json();
+        currentOwnerId = owner.id;
+
+        // Seed 10,000 credits
+        await fetch(`/v1/accounts/${owner.id}/seed?amount_credits=10000`, {
+          method: "POST",
+          headers: {"X-Operator-Key": "operator-disabled-in-preview"}
+        });
+
+        // Register agent
+        const agentRes = await fetch("/v1/agents", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Owner-Id": owner.id
+          },
+          body: JSON.stringify({owner_id: owner.id, name: "WebTesterAgent"})
+        });
+        const agent = await agentRes.json();
+
+        // Issue key
+        const keyRes = await fetch(`/v1/agents/${agent.id}/keys`, {
+          method: "POST",
+          headers: {"X-Owner-Id": owner.id}
+        });
+        const keyData = await keyRes.json();
+        currentAgentKey = keyData.api_key;
+
+        // Create grant (5000 max, 500 per order)
+        const grantRes = await fetch("/v1/spend_grants", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Owner-Id": owner.id
+          },
+          body: JSON.stringify({
+            owner_id: owner.id,
+            agent_id: agent.id,
+            max_allowance_credits: 5000,
+            per_order_max_credits: 500
+          })
+        });
+        const grant = await grantRes.json();
+        currentGrantId = grant.id;
+
+        document.getElementById("grant-cap").textContent = `${grant.per_order_max_credits} max/order`;
+      } catch (e) {
+        console.error("Actor setup error:", e);
+      }
+    }
+
+    async function loadBalances() {
+      if (!currentOwnerId) return;
+      try {
+        const res = await fetch(`/v1/accounts/${currentOwnerId}`);
+        const acc = await res.json();
+        document.getElementById("nav-buyer-bal").textContent = `${acc.available_credits} credits`;
+
+        const feeRes = await fetch(`/v1/accounts/platform_fees`);
+        const feeAcc = await feeRes.json();
+        document.getElementById("nav-fee-bal").textContent = `${feeAcc.available_credits} credits`;
+      } catch (e) {
+        console.error("Balances error:", e);
+      }
+    }
+
+    async function executePurchase() {
+      const select = document.getElementById("select-offer");
+      const offerId = select.value;
+      const rawText = document.getElementById("input-invoice").value;
+      const idempKey = "UI-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+
+      const btn = document.getElementById("btn-purchase");
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Executing Purchase...`;
+
+      try {
+        const res = await fetch("/v1/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentAgentKey}`,
+            "Idempotency-Key": idempKey
+          },
+          body: JSON.stringify({
+            offer_id: offerId,
+            expected_offer_version: 1,
+            grant_id: currentGrantId,
+            raw_invoice_text: rawText
+          })
+        });
+
+        const order = await res.json();
+        if (!res.ok) {
+          alert("Purchase Failed: " + (order.detail || JSON.stringify(order)));
+          return;
+        }
+
+        // Fetch result
+        if (order.execution_state === "SUCCEEDED") {
+          const resPayload = await fetch(`/v1/orders/${order.id}/result`, {
+            headers: {"Authorization": `Bearer ${currentAgentKey}`}
+          });
+          const resultJson = await resPayload.json();
+          renderResult(resultJson);
+        } else {
+          document.getElementById("result-view").innerHTML = `
+            <div class="text-rose-400">
+              <p><strong>Order Execution Failed:</strong> ${order.error_code || 'Unknown'}</p>
+              <p class="text-slate-400 mt-1">${order.error_message || ''}</p>
+            </div>
+          `;
+        }
+
+        addOrderToTable(order);
+        await loadBalances();
+      } catch (e) {
+        alert("Error: " + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-bolt"></i> Execute Agent Purchase`;
+      }
+    }
+
+    function renderResult(result) {
+      document.getElementById("extraction-status").innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> Succeeded (24h Retention)</span>`;
+      document.getElementById("result-view").innerHTML = `
+        <div class="space-y-2 text-slate-200">
+          <div class="grid grid-cols-2 gap-2 pb-2 border-b border-slate-800 text-[11px]">
+            <div><strong>Vendor:</strong> ${result.vendor_name || 'N/A'}</div>
+            <div><strong>Invoice No:</strong> ${result.invoice_number || 'N/A'}</div>
+            <div><strong>Date:</strong> ${result.invoice_date || 'N/A'}</div>
+            <div><strong>Total:</strong> ${result.currency} ${(result.total_amount_minor / 100).toFixed(2)}</div>
+          </div>
+          <p class="text-[11px] text-slate-400"><strong>Evidence Spans Verified:</strong> ${result.evidence_spans.length}</p>
+          <pre class="text-[11px] bg-slate-900 p-2 rounded border border-slate-800 text-cyan-300 overflow-x-auto">${JSON.stringify(result, null, 2)}</pre>
+        </div>
+      `;
+    }
+
+    function addOrderToTable(order) {
+      const tbody = document.getElementById("orders-table");
+      if (tbody.children.length === 1 && tbody.children[0].innerText.includes("No orders")) {
+        tbody.innerHTML = "";
+      }
+
+      const tr = document.createElement("tr");
+      tr.className = "hover:bg-slate-800/40 transition";
+      const isSuccess = order.execution_state === "SUCCEEDED";
+      const stateBadge = isSuccess 
+        ? `<span class="text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-1.5 py-0.5 rounded text-[10px]">SUCCEEDED</span>`
+        : `<span class="text-rose-400 bg-rose-950/60 border border-rose-800/60 px-1.5 py-0.5 rounded text-[10px]">${order.execution_state}</span>`;
+
+      tr.innerHTML = `
+        <td class="py-2.5 font-bold text-white">${order.id}</td>
+        <td>${stateBadge}</td>
+        <td><span class="text-cyan-400">${order.accounting_state}</span></td>
+        <td>${order.pricing.buyer_total_credits} cr</td>
+        <td>
+          ${isSuccess ? `<button onclick="openDisputePrompt('${order.id}')" class="text-amber-400 hover:text-amber-300 text-[11px]"><i class="fa-solid fa-triangle-exclamation"></i> Dispute</button>` : '<span class="text-slate-600">-</span>'}
+        </td>
+      `;
+      tbody.prepend(tr);
+    }
+
+    async function openDisputePrompt(orderId) {
+      const reason = prompt("Enter Dispute Reason (e.g. WRONG_TOTAL, MISSING_FIELD):", "WRONG_TOTAL");
+      if (!reason) return;
+      const details = prompt("Enter specific dispute explanation:", "The extracted vendor total missed statutory line items.");
+      if (!details) return;
+
+      try {
+        const res = await fetch("/v1/disputes", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${currentAgentKey}`
+          },
+          body: JSON.stringify({order_id: orderId, reason, details})
+        });
+        const disp = await res.json();
+        if (!res.ok) {
+          alert("Dispute Error: " + disp.detail);
+          return;
+        }
+        renderDisputeCard(disp);
+        alert("Dispute opened successfully! Evidence hold placed for 7 days.");
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+
+    function renderDisputeCard(disp) {
+      const container = document.getElementById("disputes-container");
+      if (container.children.length === 1 && container.children[0].innerText.includes("No active")) {
+        container.innerHTML = "";
+      }
+
+      const card = document.createElement("div");
+      card.id = `disp-${disp.id}`;
+      card.className = "bg-slate-950 border border-amber-900/60 rounded-xl p-3.5 space-y-2 mono text-xs";
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-amber-400">${disp.id} (Order: ${disp.order_id})</span>
+          <span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800 text-[10px]">${disp.status}</span>
+        </div>
+        <p class="text-slate-300">${disp.reason}: ${disp.details}</p>
+        <p class="text-[10px] text-slate-500">Evidence Hold Active Until: ${disp.evidence_hold_until}</p>
+        <div class="flex items-center gap-2 pt-2 border-t border-slate-900">
+          <button onclick="adjudicate('${disp.id}', true)" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[11px] font-bold">Approve Refund</button>
+          <button onclick="adjudicate('${disp.id}', false)" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[11px]">Reject Dispute</button>
+        </div>
+      `;
+      container.prepend(card);
+    }
+
+    async function adjudicate(disputeId, approved) {
+      const reason = prompt("Enter operator adjudication justification:", approved ? "Verified semantic extraction discrepancy." : "Result strictly conforms to input.");
+      if (!reason) return;
+
+      try {
+        const res = await fetch(`/v1/operator/disputes/${disputeId}/adjudicate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Operator-Key": "operator-disabled-in-preview"
+          },
+          body: JSON.stringify({approved, operator_reason: reason})
+        });
+        const updated = await res.json();
+        alert(`Dispute ${updated.status}! Financial balances updated.`);
+        const card = document.getElementById(`disp-${disputeId}`);
+        if (card) {
+          card.remove();
+        }
+        await loadBalances();
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+
+    function refreshData() {
+      loadOffers();
+      loadBalances();
+    }
+
+    window.onload = init;
+  </script>
+
+</body>
+</html>

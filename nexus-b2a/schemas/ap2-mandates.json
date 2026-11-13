@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Google AP2 (Agent Payments Protocol) Mandates",
+  "description": "Cryptographic Verifiable Credential schemas for IntentMandate, CartMandate, and PaymentMandate used in Nexus-B2A.",
+  "definitions": {
+    "IntentMandate": {
+      "type": "object",
+      "required": ["@context", "id", "type", "issuer", "issuanceDate", "expirationDate", "credentialSubject", "proof"],
+      "properties": {
+        "@context": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "id": { "type": "string", "format": "uri" },
+        "type": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "issuer": { "type": "string", "description": "DID of Buyer Enterprise Principal" },
+        "issuanceDate": { "type": "string", "format": "date-time" },
+        "expirationDate": { "type": "string", "format": "date-time" },
+        "credentialSubject": {
+          "type": "object",
+          "required": ["id", "authorizedDomain", "constraints"],
+          "properties": {
+            "id": { "type": "string", "description": "DID of Authorized AI Purchasing Agent" },
+            "authorizedDomain": { "type": "string", "example": "procurement.mro.industrial" },
+            "constraints": {
+              "type": "object",
+              "required": ["maxAmount", "allowedHsnCodes"],
+              "properties": {
+                "maxAmount": {
+                  "type": "object",
+                  "required": ["value", "currency"],
+                  "properties": {
+                    "value": { "type": "number", "minimum": 0 },
+                    "currency": { "type": "string", "enum": ["INR", "USD"] }
+                  }
+                },
+                "allowedHsnCodes": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                },
+                "requireVerifiedDistributor": { "type": "boolean", "default": true },
+                "maxDeliveryDays": { "type": "integer", "default": 3 },
+                "humanInterventionRequired": { "type": "boolean", "default": false }
+              }
+            }
+          }
+        },
+        "proof": {
+          "type": "object",
+          "required": ["type", "created", "verificationMethod", "proofPurpose", "proofValue"],
+          "properties": {
+            "type": { "type": "string", "enum": ["Ed25519Signature2020"] },
+            "created": { "type": "string", "format": "date-time" },
+            "verificationMethod": { "type": "string" },
+            "proofPurpose": { "type": "string", "enum": ["assertionMethod"] },
+            "proofValue": { "type": "string" }
+          }
+        }
+      }
+    },
+    "CartMandate": {
+      "type": "object",
+      "required": ["@context", "id", "type", "issuer", "issuanceDate", "expirationDate", "credentialSubject", "proof"],
+      "properties": {
+        "@context": { "type": "array", "items": { "type": "string" } },
+        "id": { "type": "string", "format": "uri" },
+        "type": { "type": "array", "items": { "type": "string" } },
+        "issuer": { "type": "string", "description": "DID of Nexus-B2A Merchant Gateway" },
+        "issuanceDate": { "type": "string", "format": "date-time" },
+        "expirationDate": { "type": "string", "format": "date-time" },
+        "credentialSubject": {
+          "type": "object",
+          "required": ["parentIntentMandateId", "merchantId", "lineItems", "totalPayableAmount"],
+          "properties": {
+            "parentIntentMandateId": { "type": "string" },
+            "merchantId": { "type": "string" },
+            "lineItems": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["sku", "hsn", "quantity", "unitPriceExclTax", "taxRatePct", "lineTotalInclTax"],
+                "properties": {
+                  "sku": { "type": "string" },
+                  "hsn": { "type": "string" },
+                  "description": { "type": "string" },
+                  "quantity": { "type": "integer", "minimum": 1 },
+                  "unitPriceExclTax": { "type": "number" },
+                  "taxRatePct": { "type": "number" },
+                  "taxAmount": { "type": "number" },
+                  "lineTotalInclTax": { "type": "number" }
+                }
+              }
+            },
+            "shippingCost": { "type": "number", "default": 0 },
+            "totalPayableAmount": {
+              "type": "object",
+              "required": ["value", "currency"],
+              "properties": {
+                "value": { "type": "number" },
+                "currency": { "type": "string" }
+              }
+            },
+            "deliveryPincode": { "type": "string", "pattern": "^[1-9][0-9]{5}$" },
+            "promisedDispatchHours": { "type": "integer" }
+          }
+        },
+        "proof": {
+          "type": "object",
+          "required": ["type", "created", "verificationMethod", "proofPurpose", "proofValue"],
+          "properties": {
+            "type": { "type": "string" },
+            "created": { "type": "string" },
+            "verificationMethod": { "type": "string" },
+            "proofPurpose": { "type": "string" },
+            "proofValue": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}
+

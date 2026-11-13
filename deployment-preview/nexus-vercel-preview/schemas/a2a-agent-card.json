@@ -1,0 +1,36 @@
+{
+  "$schema": "https://a2aprotocol.ai/schemas/agent-card-v1.json",
+  "name": "Nexus SaaS Capability Marketplace",
+  "description": "Agent-native marketplace where autonomous agents discover, compare, and purchase digital SaaS capabilities under owner-governed spend grants with double-entry settlement.",
+  "url": "http://localhost:8000",
+  "version": "1.0.0",
+  "capabilities": [
+    {
+      "id": "invoice.extract.v1",
+      "name": "Invoice Text Extraction",
+      "version": "1.0.0",
+      "description": "Text-to-JSON extraction with character offset evidence span validation and arithmetic reconciliation.",
+      "input_content_type": "text/plain",
+      "output_content_type": "application/json",
+      "schema_url": "http://localhost:8000/v1/schemas/invoice.extract.v1.json"
+    }
+  ],
+  "protocols": {
+    "rest": "http://localhost:8000/v1",
+    "mcp": "http://localhost:8000/mcp",
+    "console": "http://localhost:8000/console"
+  },
+  "authentication": {
+    "type": "BearerToken",
+    "mechanism": "SHA-256 Hashed Agent Secret",
+    "delegation": "SpendGrant"
+  },
+  "governance": {
+    "accounting_model": "DoubleEntryLedger",
+    "currency": "TEST_CREDITS",
+    "settlement": "ZeroSumPostings",
+    "retention_period_hours": 24,
+    "dispute_retention_hold_days": 7,
+    "review_policy": "CommonOwnerSelfDealingExclusion"
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Stripe & OpenAI ACP (Agentic Commerce Protocol) Checkout Specification",
+  "description": "Endpoints and data models for ACP checkout session lifecycle.",
+  "paths": {
+    "/v1/acp/checkout_sessions": {
+      "post": {
+        "summary": "Create Checkout Session",
+        "description": "Initiates a stateful cart session, maps items to authorized distributor inventory, and binds an AP2 Intent Mandate.",
+        "headers": {
+          "Idempotency-Key": { "type": "string", "required": true }
+        },
+        "requestBody": {
+          "type": "object",
+          "required": ["currency", "items", "intent_mandate_token"],
+          "properties": {
+            "currency": { "type": "string", "enum": ["inr", "usd"] },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "quantity"],
+                "properties": {
+                  "id": { "type": "string", "description": "SKU identifier" },
+                  "quantity": { "type": "integer", "minimum": 1 }
+                }
+              }
+            },
+            "intent_mandate_token": { "type": "string", "description": "JWT/JWS containing the signed AP2 Intent Mandate" },
+            "buyer_context": {
+              "type": "object",
+              "properties": {
+                "buyer_did": { "type": "string" },
+                "gstin": { "type": "string" },
+                "delivery_address": {
+                  "type": "object",
+                  "properties": {
+                    "line1": { "type": "string" },
+                    "city": { "type": "string" },
+                    "state": { "type": "string" },
+                    "postal_code": { "type": "string" },
+                    "country": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "object": { "type": "string", "enum": ["checkout_session"] },
+              "status": { "type": "string", "enum": ["not_ready_for_payment", "ready_for_payment"] },
+              "currency": { "type": "string" },
+              "amount_subtotal": { "type": "integer" },
+              "amount_tax": { "type": "integer" },
+              "amount_shipping": { "type": "integer" },
+              "amount_total": { "type": "integer" },
+              "capabilities": {
+                "type": "object",
+                "properties": {
+                  "payment": {
+                    "type": "object",
+                    "properties": {
+                      "handlers": { "type": "array" }
+                    }
+                  }
+                }
+              },
+              "cart_mandate_id": { "type": "string" },
+              "expires_at": { "type": "integer" }
+            }
+          }
+        }
+      }
+    },
+    "/v1/acp/checkout_sessions/{id}/complete": {
+      "post": {
+        "summary": "Complete Checkout Session",
+        "headers": {
+          "Idempotency-Key": { "type": "string", "required": true }
+        },
+        "requestBody": {
+          "type": "object",
+          "required": ["handler_id", "payment_credential_token"],
+          "properties": {
+            "handler_id": { "type": "string" },
+            "payment_credential_token": { "type": "string" }
+          }
+        },
+        "responses": {
+          "200": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "string", "enum": ["completed"] },
+              "order_reference": { "type": "string" },
+              "amount_settled": { "type": "number" },
+              "receipt_url": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

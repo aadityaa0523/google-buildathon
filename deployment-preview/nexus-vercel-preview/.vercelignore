@@ -1,0 +1,11 @@
+.env*
+*.db
+*.db-*
+**/__pycache__/**
+.pytest_cache/**
+tests/**
+run_demo.py
+pytest.ini
+source-manifest.json
+preview-credentials.txt
+*.zip

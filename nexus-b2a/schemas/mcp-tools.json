@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Nexus-B2A Model Context Protocol (MCP) Tool Suite",
+  "description": "Standardized MCP tool definitions exposed over SSE and Streamable HTTP for AI purchasing agents.",
+  "tools": [
+    {
+      "name": "query_industrial_catalog",
+      "description": "Search verified industrial distributor stock for mechanical, electrical, and pneumatic spares. Returns verified SKUs, stock levels, OEM certifications, and unit pricing in INR.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": ["bearings", "motors", "valves", "switchgear"],
+            "description": "Industrial product category"
+          },
+          "query_text": {
+            "type": "string",
+            "description": "Part number or technical specifications (e.g. '6205-2RSH' or '1.5kW 1440 RPM')"
+          },
+          "max_dispatch_days": {
+            "type": "integer",
+            "default": 3,
+            "description": "Maximum promised dispatch time in days"
+          }
+        },
+        "required": ["category", "query_text"]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "create_acp_checkout_session",
+      "description": "Locks in stock and pricing with an authorized distributor and generates an AP2 Cart Mandate. Requires an active AP2 Intent Mandate token.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "sku": { "type": "string", "description": "Verified SKU identifier" },
+          "quantity": { "type": "integer", "minimum": 1 },
+          "intent_mandate_token": { "type": "string", "description": "Cryptographically signed AP2 Intent Mandate token" },
+          "delivery_pincode": { "type": "string", "pattern": "^[1-9][0-9]{5}$", "description": "6-digit Indian postal code" }
+        },
+        "required": ["sku", "quantity", "intent_mandate_token", "delivery_pincode"]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": false
+      }
+    },
+    {
+      "name": "execute_mandate_payment",
+      "description": "Executes programmatic payment against the checkout session using UPI Reserve Pay (Purpose 77) or delegated tokenized card.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "checkout_session_id": { "type": "string", "description": "ACP Checkout session identifier" },
+          "handler_id": { "type": "string", "enum": ["handler_upi_reservepay", "handler_card_tokenized"] },
+          "payment_credential_token": { "type": "string", "description": "Scoped single-use payment token or UPI block reference" }
+        },
+        "required": ["checkout_session_id", "handler_id", "payment_credential_token"]
+      },
+      "annotations": {
+        "readOnlyHint": false,
+        "destructiveHint": true
+      }
+    }
+  ]
+}
+

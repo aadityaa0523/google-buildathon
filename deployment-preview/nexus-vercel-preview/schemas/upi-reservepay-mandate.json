@@ -1,0 +1,25 @@
+{
+  "$schema": "https://npci.org.in/schemas/upi-reservepay-v1.json",
+  "title": "NPCI UPI Reserve Pay Mandate (Single Block Multiple Debit)",
+  "purpose_code": "77",
+  "description": "Pre-authorized fund block allowing autonomous programmatic debits for e-commerce and MRO procurement.",
+  "mandate_type": "UPI_RESERVE_PAY",
+  "block_reference": "BLK-IND-MRO-88419",
+  "payer_vpa": "buyer.procurement@okhdfcbank",
+  "payee_vpa": "nexusb2a.mro@icici",
+  "blocked_amount": 50000.00,
+  "currency": "INR",
+  "authorized_debits": [
+    {
+      "debit_seq": 1,
+      "amount": 7802.00,
+      "order_id": "cs_acp_9918237190",
+      "timestamp": "2026-11-13T10:06:00Z",
+      "status": "SETTLED"
+    }
+  ],
+  "remaining_blocked_balance": 42198.00,
+  "expiry_date": "2026-11-20T23:59:59Z",
+  "revocable_by_payer": true
+}
+

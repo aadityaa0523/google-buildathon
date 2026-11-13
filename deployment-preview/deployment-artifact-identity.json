@@ -1,0 +1,21 @@
+{
+  "operation": "create_library_file",
+  "status": "succeeded",
+  "path": "/Google buildathon/nexus-vercel-preview.zip",
+  "file_id": "file_00000000c914821199ea2dd48708b380",
+  "library_file_id": "libfile_f819231dea7c8191bca22bc565dc0ce1",
+  "file_name": "nexus-vercel-preview.zip",
+  "current_version_number": 0,
+  "restored_from_version_number": null,
+  "xattrs": [
+    {
+      "name": "user.library-file-version",
+      "value": "0"
+    }
+  ],
+  "directory_id": "6af74fab4d4c8191927a6763759fe76e",
+  "mime_type": "application/zip",
+  "library_artifact_type": "other",
+  "file_size_bytes": 57307,
+  "external_connectors_accessed": false
+}
